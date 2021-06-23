@@ -8,7 +8,8 @@ using namespace ::testing;
 
 class Example {
 public:
-    Example () {++_id_count;};
+    Example () : id{++_id_count} {};
+    const int id;
     static std::atomic<int> _id_count;
 };
 
@@ -28,4 +29,13 @@ TEST_F(RecyclerTests, CreatesInstanceIfRecyclerEmpty) {
     auto instance = recycler->recycle();
     const int new_count{Example::_id_count};
     ASSERT_THAT(new_count, Gt(old_count));
+}
+
+TEST_F(RecyclerTests, RecyclesExistingInstance) {
+    auto instance = recycler->recycle();
+    auto* instance_address = instance.get();
+    recycler->trash(std::move(instance));
+    auto recycled = recycler->recycle();
+    auto* recycled_address = recycled.get();
+    ASSERT_THAT(recycled_address, Eq(instance_address));
 }
